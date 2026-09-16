@@ -1,5 +1,12 @@
 # Arbitr AI — Настройка Harness CI/CD
 
+> **Аккаунт создан 16.09.2026:**
+> - Account Name: `arbitr-ai`
+> - Account Id: `17FsggPIQ1yKj5XqvB4zBQ`
+> - Harness Cluster: `prod-1`
+> - Организация/проект: создаются автоматически через
+>   [`infra/harness-terraform/main.tf`](infra/harness-terraform/main.tf)
+
 Пошаговая инструкция подключения проекта **Arbitr AI** (платформа AI-автоматизации
 финансового управляющего) к Harness: аккаунт → организация → проект → Git →
 секреты → Kubernetes-кластер → деплой.
@@ -26,7 +33,25 @@
    - **Feature Flags** (поэтапное включение функций),
    - **Secrets Management** (встроен).
 
----
+
+## 1b. API-ключ для автоматизации (Terraform)
+
+Для создания организации/проекта/секретов автоматически нужен API-токен:
+
+1. В Harness: **Account Settings (верхний правый угол) → Access Control → API Keys**.
+2. **Create API Key** → Name: `arbitr-ai-terraform`.
+3. **Add Token** → скопируйте токен (показывается один раз).
+4. Примените Terraform (см. [`infra/harness-terraform`](infra/harness-terraform)):
+
+   ```bash
+   cd infra/harness-terraform
+   export HARNESS_PLATFORM_API_KEY="<токен>"
+   terraform init && terraform plan && terraform apply
+   ```
+
+> Токен sensitive — храните в менеджере паролей, не коммитьте.
+
+------
 
 ## 2. Подключение Git-репозитория
 

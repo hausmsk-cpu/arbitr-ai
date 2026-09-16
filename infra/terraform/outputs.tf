@@ -5,7 +5,7 @@ output "postgres_host" {
 }
 
 output "postgres_port" {
-  value = 6432  # стандартный порт Yandex Managed PostgreSQL
+  value = 6432 # стандартный порт Yandex Managed PostgreSQL
 }
 
 output "redis_host" {
