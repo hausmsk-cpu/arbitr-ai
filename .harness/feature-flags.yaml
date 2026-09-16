@@ -1,0 +1,98 @@
+# ─────────────────────────────────────────────────────────────
+# arbitr-ai — Feature Flags (Harness FF)
+# Поэтапное включение функций через Harness Feature Flags SDK
+# ─────────────────────────────────────────────────────────────
+
+# ── Флаг: enable_rosreestr_api ──
+# Включение API Росреестра (выписки ЕГРН)
+# Окружения: dev=OFF, stage=ON при тестировании, prod=ON после пилота
+flag:
+  identifier: enable_rosreestr_api
+  name: Включить API Росреестра
+  description: Управляет вызовом API Росреестра для получения выписок ЕГРН
+  permanent: false
+  variations:
+    - identifier: on
+      name: ON
+      value: "true"
+    - identifier: off
+      name: OFF
+      value: "false"
+  defaultOnVariation: on
+  defaultOffVariation: off
+
+# ── Флаг: enable_ai_analysis ──
+# Включение AI-анализа документов и генерации
+flag:
+  identifier: enable_ai_analysis
+  name: Включить AI-анализ
+  description: Управляет генерацией документов и анализом через LLM
+  permanent: false
+  variations:
+    - identifier: on
+      name: ON
+      value: "true"
+    - identifier: off
+      name: OFF
+      value: "false"
+  defaultOnVariation: on
+  defaultOffVariation: off
+
+# ── Флаг: enable_email_delivery ──
+# Отправка электронных писем кредиторам
+flag:
+  identifier: enable_email_delivery
+  name: Включить Email-отправку
+  description: Управляет модулем отправки электронных писем
+  permanent: false
+  variations:
+    - identifier: on
+      name: ON
+      value: "true"
+    - identifier: off
+      name: OFF
+      value: "false"
+  defaultOnVariation: on
+  defaultOffVariation: off
+
+# ── Флаг: enable_notary_integration ──
+# Работа с нотариусом (смерть должника, наследство)
+flag:
+  identifier: enable_notary_integration
+  name: Включить интеграцию с нотариусом
+  description: Управляет модулем взаимодействия с нотариусом
+  permanent: false
+  variations:
+    - identifier: on
+      name: ON
+      value: "true"
+    - identifier: off
+      name: OFF
+      value: "false"
+  defaultOnVariation: on
+  defaultOffVariation: off
+
+# ── Флаг: enable_rpa_gibdd ──
+# RPA-автоматизация ГИБДД, ГИМС, Гостехнадзора
+flag:
+  identifier: enable_rpa_gibdd
+  name: Включить RPA для ГИБДД
+  description: Управляет RPA-модулями (Playwright) для порталов госорганов
+  permanent: false
+  variations:
+    - identifier: on
+      name: ON
+      value: "true"
+    - identifier: off
+      name: OFF
+      value: "false"
+  defaultOnVariation: on
+  defaultOffVariation: off
+
+# ─────────────────────────────────────────────────────────────
+# Использование в коде (Python):
+#   from harness_ff import SDK
+#   sdk = SDK(apiKey="<+secrets.getValue('harness_ff_key')>")
+#   if sdk.bool_variation("enable_rosreestr_api", target={"identifier": user_id}, default=False):
+#       ... # вызов Росреестра
+# ─────────────────────────────────────────────────────────────

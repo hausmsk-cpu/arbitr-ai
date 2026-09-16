@@ -1,0 +1,37 @@
+# ─────────────────────────────────────────────────────────────
+# arbitr-ai — Harness Environment: STAGE
+# ─────────────────────────────────────────────────────────────
+environment:
+  identifier: stage
+  name: Stage
+  orgIdentifier: arbitr-ai
+  projectIdentifier: backend
+  description: Staging environment for arbitr-ai
+  variables:
+    - name: ENVIRONMENT
+      type: String
+      value: stage
+    - name: DEBUG
+      type: String
+      value: "false"
+    - name: LOG_LEVEL
+      type: String
+      value: INFO
+    - name: DATABASE_URL
+      type: Secret
+      value: arbitr_ai_db_url_stage
+    - name: REDIS_URL
+      type: Secret
+      value: arbitr_ai_redis_url_stage
+    - name: OPENAI_API_KEY
+      type: Secret
+      value: arbitr_ai_openai_key_stage
+    - name: FNS_API_KEY
+      type: Secret
+      value: arbitr_ai_fns_key_stage
+    - name: POST_API_TOKEN
+      type: Secret
+      value: arbitr_ai_post_token_stage
+    - name: SECRET_KEY
+      type: Secret
+      value: arbitr_ai_jwt_secret_stage

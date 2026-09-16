@@ -1,0 +1,91 @@
+# ─────────────────────────────────────────────────────────────
+# arbitr-ai — Pipeline 4: infra-provision (Terraform)
+# Триггер: изменение файлов в infra/terraform/
+# ─────────────────────────────────────────────────────────────
+pipeline:
+  name: infra-provision
+  identifier: infra_provision
+  projectIdentifier: infra
+  orgIdentifier: arbitr-ai
+  tags:
+    env: all
+    type: terraform
+
+  properties:
+    ci:
+      codebase:
+        build: <+input>
+
+  stages:
+    - stage:
+        name: Terraform Plan
+        identifier: terraform_plan
+        type: CI
+        spec:
+          execution:
+            steps:
+              - step:
+                  type: Run
+                  name: Terraform Init & Plan
+                  identifier: tf_plan
+                  spec:
+                    shell: Sh
+                    command: |-
+                      cd infra/terraform
+                      terraform init -backend-config="access_key=<+secrets.getValue('tf_s3_access_key')>"
+                      terraform plan \
+                        -var="db_password=<+secrets.getValue('db_password')>" \
+                        -var="environment=dev" \
+                        -out=tfplan
+                      # Сохраняем план для следующего stage
+                      cat tfplan | base64 > /tmp/tfplan.b64
+
+    - stage:
+        name: Manual Approval
+        identifier: tf_approval
+        type: Custom
+        spec:
+          execution:
+            steps:
+              - step:
+                  type: HarnessApproval
+                  name: Approve Terraform Apply
+                  identifier: approve_apply
+                  spec:
+                    approvers:
+                      minCount: 1
+                      users: ["team-lead", "devops"]
+                    approvalMessage:
+                      type: "KEY_VALUE"
+                      value: "Apply Terraform changes for arbitr-ai infra?"
+
+    - stage:
+        name: Terraform Apply
+        identifier: terraform_apply
+        type: CI
+        spec:
+          execution:
+            steps:
+              - step:
+                  type: Run
+                  name: Apply Changes
+                  identifier: tf_apply
+                  spec:
+                    shell: Sh
+                    command: |-
+                      cd infra/terraform
+                      terraform init -backend-config="access_key=<+secrets.getValue('tf_s3_access_key')>"
+                      terraform apply -auto-approve
+              - step:
+                  type: Run
+                  name: Verify Infrastructure
+                  identifier: verify_infra
+                  spec:
+                    shell: Sh
+                    command: |-
+                      # Проверяем доступность PostgreSQL
+                      PGPASSWORD=<+secrets.getValue('db_password')> pg_isready \
+                        -h $(terraform output -raw postgres_host) \
+                        -p $(terraform output -raw postgres_port) \
+                        -U arbitr-ai
+                      echo "Infrastructure verified ✅"

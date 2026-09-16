@@ -1,0 +1,28 @@
+# Сервисный аккаунт и роли для деплоя arbitr-ai (используется раннером Harness)
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: arbitr-ai-deployer
+  namespace: arbitr-ai
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: arbitr-ai-deployer
+rules:
+  - apiGroups: ["*"]
+    resources: ["deployments", "services", "ingresses", "configmaps", "secrets", "pods"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: arbitr-ai-deployer
+subjects:
+  - kind: ServiceAccount
+    name: arbitr-ai-deployer
+    namespace: arbitr-ai
+roleRef:
+  kind: ClusterRole
+  name: arbitr-ai-deployer
+  apiGroup: rbac.authorization.k8s.io

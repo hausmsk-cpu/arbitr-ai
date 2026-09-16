@@ -1,0 +1,53 @@
+# Значения по умолчанию для arbitr-ai
+replicaCount: 2
+
+image:
+  repository: cr.yandex/arbitr-ai/backend
+  tag: latest
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+
+nameOverride: ""
+fullnameOverride: ""
+
+service:
+  type: ClusterIP
+  port: 8000
+
+ingress:
+  enabled: true
+  className: "nginx"
+  host: arbitr-ai.ru
+  tlsSecret: arbitr-ai-tls
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+env:
+  - name: ENVIRONMENT
+    value: "prod"
+  - name: DEBUG
+    value: "false"
+
+secrets:
+  useHarnessSecrets: true   # секреты из Harness Secrets Management
+
+livenessProbe:
+  httpGet:
+    path: /health
+    port: http
+  initialDelaySeconds: 15
+  periodSeconds: 20
+
+readinessProbe:
+  httpGet:
+    path: /health
+    port: http
+  initialDelaySeconds: 10
+  periodSeconds: 15

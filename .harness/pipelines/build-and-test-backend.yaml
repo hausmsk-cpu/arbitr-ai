@@ -1,0 +1,94 @@
+# ─────────────────────────────────────────────────────────────
+# arbitr-ai — Pipeline 1: build-and-test-backend
+# Триггер: push в main / PR
+# ─────────────────────────────────────────────────────────────
+pipeline:
+  name: build-and-test-backend
+  identifier: build_and_test_backend
+  projectIdentifier: backend
+  orgIdentifier: arbitr-ai
+  tags:
+    component: backend
+    env: all
+
+  properties:
+    ci:
+      codebase:
+        build: <+input>
+
+  stages:
+    - stage:
+        name: Build & Test Backend
+        identifier: build_test_backend
+        type: CI
+        spec:
+          cloning: true
+          execution:
+            steps:
+              - step:
+                  type: Run
+                  name: Install Dependencies
+                  identifier: install_deps
+                  spec:
+                    shell: Sh
+                    command: |-
+                      cd backend
+                      python -m venv .venv
+                      . .venv/bin/activate
+                      pip install --upgrade pip
+                      pip install -e ".[dev]"
+              - step:
+                  type: Run
+                  name: Lint (ruff + mypy)
+                  identifier: lint
+                  spec:
+                    shell: Sh
+                    command: |-
+                      cd backend
+                      . .venv/bin/activate
+                      ruff check app tests
+                      mypy app
+              - step:
+                  type: Run
+                  name: Unit Tests (pytest)
+                  identifier: unit_tests
+                  spec:
+                    shell: Sh
+                    command: |-
+                      cd backend
+                      . .venv/bin/activate
+                      export PYTHONPATH=.
+                      pytest tests -v --cov=app --cov-report=xml --cov-report=term-missing
+                      # Проверка порога покрытия (>= 80%)
+                      python -c "
+                      import xml.etree.ElementTree as ET
+                      root = ET.parse('coverage.xml').getroot()
+                      cov = float(root.attrib['line-rate']) * 100
+                      print(f'Coverage: {cov:.1f}%')
+                      assert cov >= 80, f'Coverage too low: {cov:.1f}%'
+                      "
+              - step:
+                  type: BuildAndPushDockerRegistry
+                  name: Build & Push Backend Image
+                  identifier: docker_build
+                  spec:
+                    connectorRef: account.yandex_cr   # connector к Yandex Container Registry
+                    repo: arbitr-ai/backend
+                    tags:
+                      - <+pipeline.sequenceId>
+                      - latest
+                    dockerfile: backend/Dockerfile
+                    context: backend
+              - step:
+                  type: Run
+                  name: Security Scan (Trivy)
+                  identifier: trivy_scan
+                  spec:
+                    shell: Sh
+                    command: |-
+                      trivy image --severity HIGH,CRITICAL \
+                        cr.yandex/arbitr-ai/backend:<+pipeline.sequenceId>
+                      exit $?  # fail pipeline on HIGH/CRITICAL findings
+        variables:
+          - name: PYTHONPATH
+            value: "."

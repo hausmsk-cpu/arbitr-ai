@@ -1,0 +1,9 @@
+# Namespace arbitr-ai с метками мониторинга
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: arbitr-ai
+  labels:
+    app: arbitr-ai
+    environment: production
+    monitoring: enabled

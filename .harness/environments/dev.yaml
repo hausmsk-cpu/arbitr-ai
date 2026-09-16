@@ -1,0 +1,45 @@
+# ─────────────────────────────────────────────────────────────
+# arbitr-ai — Harness Environment: DEV
+# ─────────────────────────────────────────────────────────────
+environment:
+  identifier: dev
+  name: Dev
+  orgIdentifier: arbitr-ai
+  projectIdentifier: backend
+  description: Development environment for arbitr-ai
+  variables:
+    - name: ENVIRONMENT
+      type: String
+      value: dev
+    - name: DEBUG
+      type: String
+      value: "true"
+    - name: LOG_LEVEL
+      type: String
+      value: DEBUG
+    - name: DATABASE_URL
+      type: Secret
+      value: arbitr_ai_db_url_dev   # Harness Secret Reference
+    - name: REDIS_URL
+      type: Secret
+      value: arbitr_ai_redis_url_dev
+    - name: OPENAI_API_KEY
+      type: Secret
+      value: arbitr_ai_openai_key_dev
+    - name: FNS_API_KEY
+      type: Secret
+      value: arbitr_ai_fns_key_dev
+    - name: POST_API_TOKEN
+      type: Secret
+      value: arbitr_ai_post_token_dev
+    - name: SECRET_KEY
+      type: Secret
+      value: arbitr_ai_jwt_secret_dev
+  overrides:
+    services:
+      - serviceRef: arbitr-ai-backend
+        tags:
+          component: backend
+      - serviceRef: arbitr-ai-frontend
+        tags:
+          component: frontend

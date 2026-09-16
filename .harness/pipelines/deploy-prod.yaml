@@ -1,0 +1,136 @@
+# ─────────────────────────────────────────────────────────────
+# arbitr-ai — Pipeline 3: deploy-prod
+# Триггер: ручное подтверждение (manual approval)
+# Blue/Green деплой + автоматический откат
+# ─────────────────────────────────────────────────────────────
+pipeline:
+  name: deploy-prod
+  identifier: deploy_prod
+  projectIdentifier: backend
+  orgIdentifier: arbitr-ai
+  tags:
+    env: prod
+
+  stages:
+    - stage:
+        name: Pre-deploy Checks
+        identifier: pre_deploy_checks
+        type: CI
+        spec:
+          execution:
+            steps:
+              - step:
+                  type: Run
+                  name: Verify Stage Environment
+                  identifier: verify_stage
+                  spec:
+                    shell: Sh
+                    command: |-
+                      curl -sf https://stage.arbitr.ai/health || { echo "Stage is unhealthy"; exit 1; }
+              - step:
+                  type: HarnessApproval
+                  name: Manual Approval
+                  identifier: prod_approval
+                  spec:
+                    approvers:
+                      minCount: 1
+                      users: ["team-lead", "devops"]
+                    approvalMessage:
+                      type: "KEY_VALUE"
+                      value: "Deploy arbitr-ai to PROD?  Version: <+pipeline.executionUrl>"
+                    approverInput:
+                      - name: reason
+                        type: string
+                        value: ""
+
+    - stage:
+        name: Blue/Green Deploy to Prod
+        identifier: blue_green_deploy
+        type: Deployment
+        spec:
+          serviceRef: arbitr-ai-backend
+          environmentRef: prod
+          execution:
+            steps:
+              - step:
+                  type: KubernetesCanaryDeploy
+                  name: Deploy Canary (5%)
+                  identifier: canary_deploy
+                  spec:
+                    skipSteadyStateCheck: false
+                    instanceSelection:
+                      type: Percentage
+                      spec:
+                        percentage: 5
+              - step:
+                  type: Run
+                  name: Verify Canary
+                  identifier: verify_canary
+                  spec:
+                    shell: Sh
+                    command: |-
+                      sleep 60
+                      curl -sf https://arbitr.ai/health
+                      # Проверка метрик errors, latency
+                      curl -s http://prometheus:9090/api/v1/query \
+                        --data-urlencode 'query=rate(http_requests_total{status=~"5..",job="arbitr-ai"}[5m]) < 0.01'
+              - step:
+                  type: KubernetesBlueGreenDeploy
+                  name: Switch Traffic to Green
+                  identifier: bg_switch
+                  spec:
+                    skipSteadyStateCheck: false
+            rollbackSteps:
+              - step:
+                  type: KubernetesBlueGreenRollback
+                  name: Rollback to Blue
+                  identifier: bg_rollback
+
+    - stage:
+        name: Post-deploy Validation
+        identifier: post_deploy
+        type: CI
+        spec:
+          execution:
+            steps:
+              - step:
+                  type: Run
+                  name: Smoke Tests (Prod)
+                  identifier: prod_smoke
+                  spec:
+                    shell: Sh
+                    command: |-
+                      cd backend && . .venv/bin/activate
+                      export PROD_URL=https://arbitr.ai
+                      pytest tests/smoke -v
+              - step:
+                  type: Run
+                  name: Monitor for 5 minutes
+                  identifier: monitor
+                  spec:
+                    shell: Sh
+                    command: |-
+                      for i in $(seq 1 5); do
+                        echo "Monitoring check $i/5..."
+                        curl -sf https://arbitr.ai/health || exit 1
+                        sleep 60
+                      done
+
+    - stage:
+        name: Notify Deployment
+        identifier: notify_completion
+        type: Custom
+        spec:
+          execution:
+            steps:
+              - step:
+                  type: Run
+                  name: Notify Team
+                  identifier: notify_team
+                  spec:
+                    shell: Sh
+                    command: |-
+                      curl -s -X POST "https://api.telegram.org/bot<+secrets.getValue('telegram_bot_token')>/sendMessage" \
+                        -d chat_id=<+secrets.getValue('telegram_chat_id')> \
+                        -d text="🚀 arbitr-ai PROD deployed ✅\nVersion: <+pipeline.sequenceId>\nApproved by: <+approval.userIds>"
+                      failureModes: "IgnoreFailure"

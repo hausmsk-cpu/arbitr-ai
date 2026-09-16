@@ -1,0 +1,80 @@
+# ─────────────────────────────────────────────────────────────
+# arbitr-ai — Pipeline 2: deploy-stage
+# Деплой на stage-окружение после успешной сборки
+# ─────────────────────────────────────────────────────────────
+pipeline:
+  name: deploy-stage
+  identifier: deploy_stage
+  projectIdentifier: backend
+  orgIdentifier: arbitr-ai
+  tags:
+    env: stage
+
+  stages:
+    - stage:
+        name: Deploy to Stage
+        identifier: deploy_stage_k8s
+        type: Deployment
+        spec:
+          serviceRef: arbitr-ai-backend
+          environmentRef: stage
+          execution:
+            steps:
+              - step:
+                  type: KubernetesRollingDeploy
+                  name: Rolling Deploy
+                  identifier: rolling_deploy
+                  spec:
+                    skipSteadyStateCheck: false
+              - step:
+                  type: KubernetesScale
+                  name: Scale to 2 replicas
+                  identifier: scale_replicas
+                  spec:
+                    instanceSelection:
+                      type: Count
+                      spec:
+                        count: 2
+            rollbackSteps:
+              - step:
+                  type: KubernetesRollingRollback
+                  name: Auto Rollback
+                  identifier: rolling_rollback
+
+    - stage:
+        name: Integration Tests
+        identifier: integration_tests
+        type: CI
+        spec:
+          execution:
+            steps:
+              - step:
+                  type: Run
+                  name: Smoke & Integration Tests
+                  identifier: smoke_tests
+                  spec:
+                    shell: Sh
+                    command: |-
+                      BASE_URL=https://stage.arbitr.ai
+                      curl -sf $BASE_URL/health || exit 1
+                      cd backend && . .venv/bin/activate
+                      pytest tests/integration -v
+
+    - stage:
+        name: Notify
+        identifier: notify_telegram
+        type: Custom
+        spec:
+          execution:
+            steps:
+              - step:
+                  type: Run
+                  name: Send Telegram Notification
+                  identifier: telegram_notify
+                  spec:
+                    shell: Sh
+                    command: |-
+                      curl -s -X POST "https://api.telegram.org/bot<+secrets.getValue('telegram_bot_token')>/sendMessage" \
+                        -d chat_id=<+secrets.getValue('telegram_chat_id')> \
+                        -d text="✅ arbitr-ai deployed to STAGE by <+pipeline.executionUrl>"
+                    failureModes: "IgnoreFailure"

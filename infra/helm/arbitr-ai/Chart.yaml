@@ -1,0 +1,8 @@
+# Helm-чарт arbitr-ai
+
+apiVersion: v2
+name: arbitr-ai
+description: arbitr-ai — AI-платформа финансового управляющего
+type: application
+version: 0.1.0
+appVersion: "0.1.0"

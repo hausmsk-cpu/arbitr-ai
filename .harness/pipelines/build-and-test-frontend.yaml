@@ -1,0 +1,64 @@
+# ─────────────────────────────────────────────────────────────
+# arbitr-ai — Pipeline 5: build-and-test-frontend
+# Сборка и тестирование фронтенда
+# ─────────────────────────────────────────────────────────────
+pipeline:
+  name: build-and-test-frontend
+  identifier: build_and_test_frontend
+  projectIdentifier: frontend
+  orgIdentifier: arbitr-ai
+  tags:
+    component: frontend
+    env: all
+
+  stages:
+    - stage:
+        name: Build & Test Frontend
+        identifier: build_test_frontend
+        type: CI
+        spec:
+          cloning: true
+          execution:
+            steps:
+              - step:
+                  type: Run
+                  name: Install & Lint
+                  identifier: npm_install_lint
+                  spec:
+                    shell: Sh
+                    command: |-
+                      cd frontend
+                      npm ci
+                      npm run lint
+                      npx tsc --noEmit
+              - step:
+                  type: Run
+                  name: Unit Tests
+                  identifier: npm_test
+                  spec:
+                    shell: Sh
+                    command: |-
+                      cd frontend
+                      npm run test
+              - step:
+                  type: Run
+                  name: Production Build
+                  identifier: npm_build
+                  spec:
+                    shell: Sh
+                    command: |-
+                      cd frontend
+                      npm run build
+                      du -sh dist/
+              - step:
+                  type: BuildAndPushDockerRegistry
+                  name: Build & Push Frontend Image
+                  identifier: docker_frontend
+                  spec:
+                    connectorRef: account.yandex_cr
+                    repo: arbitr-ai/frontend
+                    tags:
+                      - <+pipeline.sequenceId>
+                      - latest
+                    dockerfile: frontend/Dockerfile
+                    context: frontend
