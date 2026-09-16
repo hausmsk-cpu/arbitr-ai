@@ -6,8 +6,8 @@
 pipeline:
   name: deploy-prod
   identifier: deploy_prod
-  projectIdentifier: backend
-  orgIdentifier: arbitr-ai
+  projectIdentifier: arbitr_ai_platform
+  orgIdentifier: default
   tags:
     env: prod
 

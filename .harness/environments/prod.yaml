@@ -4,8 +4,8 @@
 environment:
   identifier: prod
   name: Production
-  orgIdentifier: arbitr-ai
-  projectIdentifier: backend
+  orgIdentifier: default
+  projectIdentifier: arbitr_ai_platform
   description: Production environment for arbitr-ai
   variables:
     - name: ENVIRONMENT

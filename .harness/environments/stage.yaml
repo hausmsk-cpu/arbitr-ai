@@ -4,8 +4,8 @@
 environment:
   identifier: stage
   name: Stage
-  orgIdentifier: arbitr-ai
-  projectIdentifier: backend
+  orgIdentifier: default
+  projectIdentifier: arbitr_ai_platform
   description: Staging environment for arbitr-ai
   variables:
     - name: ENVIRONMENT

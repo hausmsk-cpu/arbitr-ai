@@ -5,8 +5,8 @@
 pipeline:
   name: deploy-stage
   identifier: deploy_stage
-  projectIdentifier: backend
-  orgIdentifier: arbitr-ai
+  projectIdentifier: arbitr_ai_platform
+  orgIdentifier: default
   tags:
     env: stage
 

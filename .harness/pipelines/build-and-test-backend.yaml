@@ -5,8 +5,8 @@
 pipeline:
   name: build-and-test-backend
   identifier: build_and_test_backend
-  projectIdentifier: backend
-  orgIdentifier: arbitr-ai
+  projectIdentifier: arbitr_ai_platform
+  orgIdentifier: default
   tags:
     component: backend
     env: all

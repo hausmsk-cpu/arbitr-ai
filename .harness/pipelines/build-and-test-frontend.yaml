@@ -5,8 +5,8 @@
 pipeline:
   name: build-and-test-frontend
   identifier: build_and_test_frontend
-  projectIdentifier: frontend
-  orgIdentifier: arbitr-ai
+  projectIdentifier: arbitr_ai_platform
+  orgIdentifier: default
   tags:
     component: frontend
     env: all

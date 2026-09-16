@@ -5,8 +5,8 @@
 pipeline:
   name: infra-provision
   identifier: infra_provision
-  projectIdentifier: infra
-  orgIdentifier: arbitr-ai
+  projectIdentifier: arbitr_ai_platform
+  orgIdentifier: default
   tags:
     env: all
     type: terraform
