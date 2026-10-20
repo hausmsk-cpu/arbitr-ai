@@ -49,3 +49,7 @@ terraform.tfvars
 *.db
 *.sqlite
 *.sqlite3
+
+# Лаборатория: материалы дел не коммитим (персональные данные)
+lab/cases/*
+!lab/cases/README.md
